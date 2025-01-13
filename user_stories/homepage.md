@@ -1,38 +1,38 @@
-# User Stories - Homepage
+# User Stories
 
-## View Welcome Message
-**Title:**  
-_As a user, I want to see a personalized welcome message with my name on the homepage, so that I feel recognized and can confirm I am logged into the correct account._
+## 1. Overview of Data on Home Screen
+**As a** user,  
+**I want to** view an overview of my data on the home screen  
+**so that** I can monitor my progress at a glance.
 
-**Acceptance Criteria:**
-1. Welcome message includes the user's name.
-2. Displayed only after successful login.
+### Example
+A fitness app displays steps walked, calories burned, and water intake on the home screen.
 
-**Priority:** High  
-**Story Points:** 1
-
----
-
-## Display Weekly Progress
-**Title:**  
-_As a user, I want to see my daily progress for each habit on the homepage, so that I can easily monitor my progress._
-
-**Acceptance Criteria:**
-1. Daily progress displayed as a bar chart.
-2. Weekly summary updates in real-time.
-
-**Priority:** High  
-**Story Points:** 3
+### Why
+This helps users stay motivated by seeing their progress immediately.
 
 ---
 
-## View Completed Habits
-**Title:**  
-_As a user, I want to see a section for completed habits on the homepage, so that I can track what I have already achieved._
+## 2. Introductory Guide for New Users
+**As a** new user,  
+**I want to** see a quick introductory guide on the home screen  
+**so that** I can learn how to use the app.
 
-**Acceptance Criteria:**
-1. Completed habits are listed separately.
-2. Include timestamps for completion.
+### Example
+A recipe app offers a carousel of tips for searching, saving, and rating recipes.
 
-**Priority:** Medium  
-**Story Points:** 2
+### Why
+Ensures new users quickly understand key features.
+
+---
+
+## 3. Quick Access to Most-Used Features
+**As a** user,  
+**I want to** access my most-used features from the home screen  
+**so that** I can navigate the app efficiently.
+
+### Example
+An e-commerce app shows shortcuts to Track Orders, Saved Items, and Browse Categories.
+
+### Why
+Improves user experience by reducing clicks for common actions.
