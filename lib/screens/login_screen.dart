@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:habit_tracker/screens/registration_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'habit_tracker_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,10 +13,49 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  // Default credentials
+  final String defaultUsername = 'testuser';
+  final String defaultPassword = 'password123';
+
+  void _login() async {
+    final username = _usernameController.text;
+    final password = _passwordController.text;
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Check against default credentials
+    if (username == defaultUsername && password == defaultPassword) {
+      await prefs.setString('name', 'Test User');
+      await prefs.setString('username', 'testuser');
+      await prefs.setDouble('age', 25);
+      await prefs.setString('country', 'United States');
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HabitTrackerScreen(username: username),
+        ),
+      );
+    } else {
+      //empty out shared preferences
+      await prefs.clear();
+      Fluttertoast.showToast(
+        msg: "The username or password was incorrect",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -28,105 +71,102 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Habit Tracker',
+                  'Habitt',
                   style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-                SizedBox(
-                  height: 30.0,
-                ),
+                SizedBox(height: 30),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                   child: TextField(
+                    controller: _usernameController,
                     decoration: InputDecoration(
-                      fillColor: Colors.white,
-                      prefixIcon: Icon(
-                        Icons.email,
-                        color: Colors.blue,
-                        size: 30,
-                      ),
-                      label: Text("Enter Username"),
+                      prefixIcon:
+                          Icon(Icons.email, color: Colors.blue.shade700),
+                      hintText: 'Enter Username',
                       border: InputBorder.none,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     ),
                   ),
                 ),
-                SizedBox(
-                  height: 30.0,
-                ),
+                SizedBox(height: 20),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                   child: TextField(
+                    controller: _passwordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      fillColor: Colors.white,
-                      prefixIcon: Icon(
-                        Icons.lock,
-                        color: Colors.blue,
-                        size: 30,
-                      ),
-                      label: Text("Enter Password"),
+                      prefixIcon: Icon(Icons.lock, color: Colors.blue.shade700),
+                      hintText: 'Enter Password',
                       border: InputBorder.none,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     ),
                   ),
                 ),
-                SizedBox(
-                  height: 10.0,
-                ),
+                SizedBox(height: 20),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                      onPressed: () {},
-                      child: Text(
-                        "Forgot Password",
-                        style: TextStyle(color: Colors.white),
-                      )),
+                    onPressed: () {
+                      // Logic for forgot password can be added here
+                    },
+                    child: Text(
+                      'Forgot password?',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                 ),
+                SizedBox(height: 20),
                 ElevatedButton(
+                  onPressed: _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue.shade600,
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 80, vertical: 15),
                   ),
-                  onPressed: () {},
                   child: Text(
-                    "Login",
+                    'Log in',
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                const Text(
+                SizedBox(height: 20),
+                Text(
                   'or',
                   style: TextStyle(color: Colors.white70),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 OutlinedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => const RegistrationScreen()),
+                      MaterialPageRoute(builder: (context) => RegisterScreen()),
                     );
                   },
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white),
+                    side: BorderSide(color: Colors.white),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 70, vertical: 15),
+                    padding: EdgeInsets.symmetric(horizontal: 70, vertical: 15),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Sign up',
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),

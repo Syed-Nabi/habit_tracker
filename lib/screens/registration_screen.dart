@@ -1,16 +1,26 @@
-import 'package:flutter/material.dart';
-import 'package:habit_tracker/screens/login_screen.dart';
+import 'dart:convert';
+import 'dart:math';
 
-class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({super.key});
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:habit_tracker/utills/country_list.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'habit_tracker_screen.dart';
+import 'login_screen.dart';
+
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<RegistrationScreen> createState() => _RegistrationScreenState();
+  State createState() => _RegisterScreenState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> {
-  double _age = 25;
-  String _country = '';
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  double _age = 25; // Default age set to 25
+  String _country = 'United States';
   List<String> _countries = [];
   List<String> selectedHabits = [];
   List<String> availableHabits = [
@@ -25,249 +35,257 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     'Journal',
     'Walk 10,000 Steps'
   ];
+  final Map<String, Color> _habitColors = {
+    'Amber': Colors.amber,
+    'Red Accent': Colors.redAccent,
+    'Light Blue': Colors.lightBlue,
+    'Light Green': Colors.lightGreen,
+    'Purple Accent': Colors.purpleAccent,
+    'Orange': Colors.orange,
+    'Teal': Colors.teal,
+    'Deep Purple': Colors.deepPurple,
+  };
 
   @override
   void initState() {
     super.initState();
-    _fetchCountries();
+    _loadCountries();
   }
 
-  Future<void> _fetchCountries() async {
-    List<String> subsetCountries = [
-      'United States',
-      'Canada',
-      'United Kingdom',
-      'Australia',
-      'India',
-      'Germany',
-      'France',
-      'Japan',
-      'China',
-      'Brazil',
-      'South Africa'
-    ];
+  Future<void> _loadCountries() async {
+    try {
+      List<String> countries = await fetchCountries();
+      setState(() {
+        _countries = countries;
+      });
+    } catch (e) {
+      // Handle error
+      _showToast('Error fetching countries');
+    }
+  }
 
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
+  void _register() async {
+    final name = _nameController.text;
+    final username = _usernameController.text;
+
+    if (username.isEmpty || name.isEmpty) {
+      _showToast('Please fill in all fields');
+      return;
+    }
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Assign random colors to selected habits.
+    Map<String, String> selectedHabitsMap = {};
+    final random = Random();
+    final colorKeys = _habitColors.keys.toList();
+    for (var habit in selectedHabits) {
+      var randomColor =
+          _habitColors[colorKeys[random.nextInt(colorKeys.length)]]!;
+      selectedHabitsMap[habit] = randomColor.value.toRadixString(16);
+    }
+
+    // Save user information and habits to shared preferences.
+    await prefs.setString('name', name);
+    await prefs.setString('username', username);
+    await prefs.setDouble('age', _age);
+    await prefs.setString('country', _country);
+    await prefs.setString('selectedHabitsMap', jsonEncode(selectedHabitsMap));
+    // await prefs.setStringList('selectedHabits', selectedHabits);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HabitTrackerScreen(username: username),
+      ),
+    );
+  }
+
+  void _toggleHabitSelection(String habit) {
     setState(() {
-      _countries = subsetCountries;
-      _countries.sort();
-      _country = _countries.isNotEmpty ? _countries[0] : 'United States';
+      if (selectedHabits.contains(habit)) {
+        selectedHabits.remove(habit);
+      } else {
+        selectedHabits.add(habit);
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: _appBar(), body: _body());
-  }
-
-  AppBar _appBar() {
-    return AppBar(
-      backgroundColor: Colors.blue.shade700,
-      centerTitle: true,
-      title: Text(
-        'Register',
-        style: TextStyle(
-          fontSize: 32,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.blue.shade700,
+        title: Text(
+          'Register',
+          style: TextStyle(
+            fontSize: 32,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LoginScreen()),
+            );
+          },
         ),
       ),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
-        onPressed: () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => LoginScreen()),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _body() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade700, Colors.blue.shade900],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blue.shade700, Colors.blue.shade900],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
-      ),
-      child: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildInputField("Name"),
-              SizedBox(
-                height: 16,
-              ),
-              _buildInputField("Username"),
-              SizedBox(
-                height: 16,
-              ),
-              _buildInputField("Password"),
-              SizedBox(
-                height: 16,
-              ),
-              _buildAgeComponent(),
-              SizedBox(
-                height: 16,
-              ),
-              __buildDropdown(),
-              SizedBox(
-                height: 16,
-              ),
-              _habitComponent(),
-              SizedBox(
-                height: 30,
-              ),
-              Align(
-                alignment: Alignment.center,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade600,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  onPressed: () {},
-                  child: Text(
-                    "Register",
-                    style: TextStyle(
-                        color: Colors.white,
+        child: Center(
+          child: SingleChildScrollView(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInputField(_nameController, 'Name', Icons.person),
+                SizedBox(height: 10),
+                _buildInputField(
+                    _usernameController, 'Username', Icons.alternate_email),
+                SizedBox(height: 10),
+                Text('Age: ${_age.round()}',
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
+                Slider(
+                  value: _age,
+                  min: 21,
+                  max: 100,
+                  divisions: 79,
+                  activeColor: Colors.blue.shade600,
+                  inactiveColor: Colors.blue.shade300,
+                  onChanged: (double value) {
+                    setState(() {
+                      _age = value;
+                    });
+                  },
+                ),
+                SizedBox(height: 10),
+                _buildCountryDropdown(),
+                SizedBox(height: 10),
+                Text('Select Your Habits',
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: availableHabits.map((habit) {
+                    final isSelected = selectedHabits.contains(habit);
+                    return GestureDetector(
+                      onTap: () => _toggleHabitSelection(habit),
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color:
+                              isSelected ? Colors.blue.shade600 : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.blue.shade700),
+                        ),
+                        child: Text(
+                          habit,
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.blue.shade700,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                SizedBox(height: 20),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: _register,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade600,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 80, vertical: 15),
+                    ),
+                    child: Text(
+                      'Register',
+                      style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildInputField(String hintText) {
+  Widget _buildInputField(
+      TextEditingController controller, String hint, IconData icon) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(30),
       ),
       child: TextField(
+        controller: controller,
         decoration: InputDecoration(
-            labelText: hintText,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+          prefixIcon: Icon(icon, color: Colors.blue.shade700),
+          hintText: hint,
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        ),
       ),
     );
   }
 
-  Widget _buildAgeComponent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: Text(
-            "Age: ${_age.toStringAsFixed(0)}",
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 22.0,
-                fontWeight: FontWeight.bold),
-          ),
-        ),
-        Slider(
-            value: _age,
-            min: 20,
-            max: 100,
-            divisions: 100,
-            activeColor: Colors.blue.shade600,
-            inactiveColor: Colors.blue.shade300,
-            thumbColor: Colors.white,
-            onChanged: (v) {
-              setState(() {
-                _age = v;
-              });
-            }),
-      ],
-    );
-  }
-
-  Widget __buildDropdown() {
+  Widget _buildCountryDropdown() {
     return Container(
-      width: MediaQuery.of(context).size.width,
+      padding: EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(30),
       ),
-      child: DropdownButton(
+      child: DropdownButton<String>(
         value: _country,
-        isExpanded: true,
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         icon: Icon(Icons.arrow_drop_down, color: Colors.blue.shade700),
-        items: _countries.map((String country) {
-          return DropdownMenuItem(
-            value: country,
-            child: Text(country),
+        isExpanded: true,
+        underline: SizedBox(),
+        items: _countries.map((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
           );
         }).toList(),
-        onChanged: (value) {
+        onChanged: (newValue) {
           setState(() {
-            _country = value.toString();
+            _country = newValue!;
           });
         },
       ),
-    );
-  }
-
-  Widget _habitComponent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0, bottom: 10),
-          child: Text(
-            "Select Habits",
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 22.0,
-                fontWeight: FontWeight.bold),
-          ),
-        ),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: availableHabits
-              .map((habit) => GestureDetector(
-                    onTap: () => {
-                      setState(() {
-                        if (selectedHabits.contains(habit)) {
-                          selectedHabits.remove(habit);
-                        } else {
-                          selectedHabits.add(habit);
-                        }
-                      })
-                    },
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: selectedHabits.contains(habit)
-                            ? Colors.blue.shade600
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.blue.shade700),
-                      ),
-                      child: Text(
-                        habit,
-                        style: TextStyle(
-                            color: selectedHabits.contains(habit)
-                                ? Colors.white
-                                : Colors.blue.shade600),
-                      ),
-                    ),
-                  ))
-              .toList(),
-        )
-      ],
     );
   }
 }
